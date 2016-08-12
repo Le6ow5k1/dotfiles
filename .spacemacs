@@ -22,8 +22,8 @@
      (ruby :variables ruby-version-manager 'rvm)
      (ruby :variables ruby-test-runner 'rspec)
      )
-   dotspacemacs-additional-packages '(multiple-cursors org-jira jira-markup-mode)
-   dotspacemacs-excluded-packages '()
+   dotspacemacs-additional-packages '(multiple-cursors org-jira jira-markup-mode ox-jira ox-gfm)
+   dotspacemacs-excluded-packages '(evil-jumper)
    dotspacemacs-delete-orphan-packages t))
 
 (defun dotspacemacs/init ()
@@ -70,7 +70,7 @@
    dotspacemacs-which-key-delay 0.4
    dotspacemacs-which-key-position 'bottom
    dotspacemacs-loading-progress-bar t
-   dotspacemacs-fullscreen-at-startup t
+   dotspacemacs-fullscreen-at-startup nil
    dotspacemacs-fullscreen-use-non-native nil
    dotspacemacs-maximized-at-startup t
    dotspacemacs-active-transparency 90
@@ -93,8 +93,39 @@
   (global-set-key (kbd "C->") 'mc/mark-next-like-this)
   (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
   (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+  (define-key key-translation-map (kbd "C-ф") (kbd "C-a"))
+  (define-key key-translation-map (kbd "C-у") (kbd "C-e"))
+  (define-key key-translation-map (kbd "C-ч") (kbd "C-x"))
+  (define-key key-translation-map (kbd "C-ы") (kbd "C-s"))
+  (define-key key-translation-map (kbd "C-н") (kbd "C-y"))
 
-  ;; (add-to-list 'grep-find-ignored-files "*.log")
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (local-set-key (kbd "C-c C-h") 'org-toggle-link-display))
+
+            (defun my-conf-item (item contents info)
+              (let* ((plain-list (org-export-get-parent item))
+                     (type (org-element-property :type plain-list)))
+                (case type
+                      (ordered
+                       (concat (make-string (1+ (org-confluence--li-depth item)) ?\#)
+                               " "
+                               (org-trim contents)))
+                      (unordered (org-export-with-backend 'confluence item contents info))
+                      (descriptive (org-export-with-backend 'confluence item contents info)))))
+
+            (org-export-define-derived-backend 'better-confluence 'confluence
+              :translate-alist '((item . better-confluence-item)))
+
+            (defun org-better-confluence-export-as-conf
+                (&optional async subtreep visible-only body-only ext-plist)
+              (interactive)
+              (org-export-to-buffer 'better-confluence "*org CONFLUENCE Export*"
+                async subtreep visible-only body-only ext-plist (lambda () (text-mode))))
+            (setq org-startup-align-all-tables t)
+            )
+
+  (setq truncate-lines 'nil)
 
   (setq jiralib-url "https://jira.railsc.ru")
   (setq-default ruby-version-manager 'rvm)
@@ -110,3 +141,17 @@
               (if (not window-system)
                   (setq global-hl-line-mode nil))))
   )
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(org-export-backends (quote (ascii html icalendar latex md confluence)))
+ '(org-support-shift-select t))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(company-tooltip-common ((t (:inherit company-tooltip :weight bold :underline nil))))
+ '(company-tooltip-common-selection ((t (:inherit company-tooltip-selection :weight bold :underline nil)))))
