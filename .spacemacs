@@ -7,10 +7,12 @@
      auto-completion
      emacs-lisp
      git
+     github
      markdown
      html
      org
      (shell :variables
+            shell-default-shell 'term
             shell-default-height 30
             shell-default-position 'bottom)
      spell-checking
@@ -21,6 +23,7 @@
      (ruby :variables ruby-enable-enh-ruby-mode t)
      (ruby :variables ruby-version-manager 'rvm)
      (ruby :variables ruby-test-runner 'rspec)
+     yaml
      )
    dotspacemacs-additional-packages '(multiple-cursors org-jira jira-markup-mode ox-jira ox-gfm)
    dotspacemacs-excluded-packages '(evil-jumper)
@@ -99,31 +102,38 @@
   (define-key key-translation-map (kbd "C-ы") (kbd "C-s"))
   (define-key key-translation-map (kbd "C-н") (kbd "C-y"))
 
+  (add-hook 'term-mode-hook
+            (function
+             (lambda ()
+               ;; (term-send-raw-string "source ~/.profile")
+               (setq-local mouse-yank-at-point t)
+               (setq-local transient-mark-mode nil))))
+
   (add-hook 'org-mode-hook
             (lambda ()
-              (local-set-key (kbd "C-c C-h") 'org-toggle-link-display))
+              (local-set-key (kbd "C-c C-h") 'org-toggle-link-display)
 
-            (defun my-conf-item (item contents info)
-              (let* ((plain-list (org-export-get-parent item))
-                     (type (org-element-property :type plain-list)))
-                (case type
-                      (ordered
-                       (concat (make-string (1+ (org-confluence--li-depth item)) ?\#)
-                               " "
-                               (org-trim contents)))
-                      (unordered (org-export-with-backend 'confluence item contents info))
-                      (descriptive (org-export-with-backend 'confluence item contents info)))))
+              (require 'ox-confluence)
+              (defun better-confluence-item (item contents info)
+                (let* ((plain-list (org-export-get-parent item))
+                       (type (org-element-property :type plain-list)))
+                  (case type
+                    (ordered
+                     (concat (make-string (1+ (org-confluence--li-depth item)) ?\#)
+                             " "
+                             (org-trim contents)))
+                    (unordered (org-export-with-backend 'confluence item contents info))
+                    (descriptive (org-export-with-backend 'confluence item contents info)))))
 
-            (org-export-define-derived-backend 'better-confluence 'confluence
-              :translate-alist '((item . better-confluence-item)))
+              (org-export-define-derived-backend 'better-confluence 'confluence
+                :translate-alist '((item . better-confluence-item)))
 
-            (defun org-better-confluence-export-as-conf
-                (&optional async subtreep visible-only body-only ext-plist)
-              (interactive)
-              (org-export-to-buffer 'better-confluence "*org CONFLUENCE Export*"
-                async subtreep visible-only body-only ext-plist (lambda () (text-mode))))
-            (setq org-startup-align-all-tables t)
-            )
+              (defun org-better-confluence-export-as-conf
+                  (&optional async subtreep visible-only body-only ext-plist)
+                (interactive)
+                (org-export-to-buffer 'better-confluence "*org CONFLUENCE Export*"
+                  async subtreep visible-only body-only ext-plist (lambda () (text-mode))))
+              (setq org-startup-align-all-tables t)))
 
   (setq truncate-lines 'nil)
 
