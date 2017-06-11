@@ -1,0 +1,21 @@
+[user]
+	name = Konstantin Lazarev
+	email = le6oww5k1@gmail.com
+[alias]
+	co = checkout
+	c = commit
+	s = status
+	b = branch
+	hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
+	type = cat-file -t
+	dump = cat-file -p
+	request = !request
+[merge]
+	tool = meld
+[color]
+	ui = auto
+	status = auto
+[mergetool]
+	keepBackup = false
+[core]
+	editor = nano
